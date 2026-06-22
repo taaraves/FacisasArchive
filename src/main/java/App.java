@@ -11,7 +11,7 @@ public class App {
         String[] perfis = {"Funcionário", "Aluno", "Sair"};
         int escolhaPerfil = JOptionPane.showOptionDialog(null,
                 "Qual é o seu perfil de acesso?",
-                "Facisa's Archive - Bem vindo",
+                "LibriTech - Bem vindo",
                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
                 null, perfis, perfis[0]);
 
@@ -19,12 +19,12 @@ public class App {
             System.exit(0);
         }
 
-        String usuarioBanco = JOptionPane.showInputDialog("Digite seu usuário do sistema:");
+        String usuarioBanco = JOptionPane.showInputDialog("Digite seu usuário do sistema (Ex: usr_gerente, usr_aluno):");
         String senhaBanco = JOptionPane.showInputDialog("Digite sua senha:");
 
         try {
             Connection conexao = Conexao.conectar(usuarioBanco, senhaBanco);
-            JOptionPane.showMessageDialog(null, "Conexão estabelecida com sucesso!");
+            JOptionPane.showMessageDialog(null, "Conexão SGBD estabelecida com sucesso!");
 
             if (escolhaPerfil == 0) {
                 menuFuncionario(conexao);
@@ -39,18 +39,26 @@ public class App {
 
     private static void menuFuncionario(Connection conexao) {
         LivroDAO livroDAO = new LivroDAO(conexao);
-        String[] opcoesMenu = {"1. Cadastrar Livro", "2. Realizar Empréstimo", "5. Excluir Livro", "7. Sair"};
+        String[] opcoesMenu = {
+                "1. Cadastrar Livro",
+                "2. Realizar Empréstimo",
+                "3. Renovar Empréstimo",
+                "4. Realizar Devolução",
+                "5. Excluir Livro",
+                "6. Relatório Financeiro",
+                "7. Sair"
+        };
 
         while (true) {
             String escolha = (String) JOptionPane.showInputDialog(null,
-                    "Menu Operacional - Facisa's Archive:\nEscolha uma opção:",
+                    "Menu Operacional - Funcionários:\nEscolha uma opção:",
                     "Painel do Funcionário",
                     JOptionPane.PLAIN_MESSAGE, null, opcoesMenu, opcoesMenu[0]);
 
             if (escolha == null || escolha.contains("7.")) break;
 
-            if (escolha.contains("1.")) {
-                try {
+            try {
+                if (escolha.contains("1.")) {
                     Livro novoLivro = new Livro();
                     novoLivro.setTitulo(JOptionPane.showInputDialog("Título do Livro:"));
                     novoLivro.setAutor(JOptionPane.showInputDialog("Autor:"));
@@ -58,48 +66,53 @@ public class App {
                     novoLivro.setPrecoCusto(Double.parseDouble(JOptionPane.showInputDialog("Preço de Custo (ex: 150.00):")));
                     novoLivro.setQuantidadeEstoque(Integer.parseInt(JOptionPane.showInputDialog("Quantidade em Estoque:")));
                     novoLivro.setStatus("DISPONIVEL");
-
                     livroDAO.cadastrarLivro(novoLivro);
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "Dados inválidos digitados. Operação cancelada.", "Erro", JOptionPane.ERROR_MESSAGE);
                 }
-            }
-            else if (escolha.contains("2.")) {
-                try {
-                    String idUsuarioStr = JOptionPane.showInputDialog("Digite o ID do Usuário (Quem vai pegar o livro):");
-                    String idLivroStr = JOptionPane.showInputDialog("Digite o ID do Livro (O que será emprestado):");
-
-                    if (idUsuarioStr != null && idLivroStr != null && !idUsuarioStr.isEmpty() && !idLivroStr.isEmpty()) {
-                        livroDAO.realizarEmprestimo(Integer.parseInt(idUsuarioStr), Integer.parseInt(idLivroStr));
-                    }
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "IDs inválidos. Apenas números inteiros são aceitos.", "Erro", JOptionPane.ERROR_MESSAGE);
+                else if (escolha.contains("2.")) {
+                    String idUsu = JOptionPane.showInputDialog("ID do Usuário (Quem pega o livro):");
+                    String idLiv = JOptionPane.showInputDialog("ID do Livro:");
+                    if (idUsu != null && idLiv != null) livroDAO.realizarEmprestimo(Integer.parseInt(idUsu), Integer.parseInt(idLiv));
                 }
-            }
-            else if (escolha.contains("5.")) {
-                String idStr = JOptionPane.showInputDialog("Digite o ID do livro que deseja EXCLUIR:");
-                if (idStr != null && !idStr.isEmpty()) {
-                    livroDAO.excluirLivro(Integer.parseInt(idStr));
+                else if (escolha.contains("3.")) {
+                    String idEmp = JOptionPane.showInputDialog("ID do Empréstimo para RENOVAÇÃO:");
+                    if (idEmp != null) livroDAO.renovarEmprestimo(Integer.parseInt(idEmp));
                 }
+                else if (escolha.contains("4.")) {
+                    String idEmp = JOptionPane.showInputDialog("ID do Empréstimo para DEVOLUÇÃO:");
+                    if (idEmp != null) livroDAO.realizarDevolucao(Integer.parseInt(idEmp));
+                }
+                else if (escolha.contains("5.")) {
+                    String idStr = JOptionPane.showInputDialog("ID do livro que deseja EXCLUIR:");
+                    if (idStr != null) livroDAO.excluirLivro(Integer.parseInt(idStr));
+                }
+                else if (escolha.contains("6.")) {
+                    livroDAO.exibirDashboardFinanceiro();
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Entrada de dados inválida.", "Erro", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-
     private static void menuAluno(Connection conexao) {
         LivroDAO livroDAO = new LivroDAO(conexao);
-        String[] opcoesMenu = {"1. Consultar Acervo Disponível", "7. Sair"};
+        String[] opcoesMenu = {"1. Consultar Acervo Público", "2. Meus Empréstimos", "3. Sair"};
 
         while (true) {
             String escolha = (String) JOptionPane.showInputDialog(null,
-                    "Menu do Aluno - Facisa's Archive:\nEscolha uma opção:",
+                    "Portal do Aluno:\nEscolha uma opção:",
                     "Painel do Aluno",
                     JOptionPane.PLAIN_MESSAGE, null, opcoesMenu, opcoesMenu[0]);
 
-            if (escolha == null || escolha.contains("7.")) break;
+            if (escolha == null || escolha.contains("3.")) break;
 
             if (escolha.contains("1.")) {
                 livroDAO.consultarAcervoPublico();
+            } else if (escolha.contains("2.")) {
+                String myId = JOptionPane.showInputDialog("Confirme o seu ID de Aluno para ver o histórico:");
+                if (myId != null && !myId.isEmpty()) {
+                    livroDAO.listarMeusEmprestimos(Integer.parseInt(myId));
+                }
             }
         }
     }
